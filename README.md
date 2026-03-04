@@ -295,10 +295,10 @@ Apache 2.0. See [LICENSE](LICENSE).
 ## Citation
 
 ```bibtex
-@software{sentinel2025,
+@software{sentinel2026,
   title   = {Sentinel: A Python Library for Log Analysis and Anomaly Detection},
-  author  = {Vergara, JM and Laverde, N and Aguilar, JP and Niño, JV and Muñoz, JD and Monsalve, D and Osorio, S},
-  year    = {2025},
+  author  = {Vergara Álvarez, José Manuel and Laverde Manotas, Nicolás and Aguilar Calle, Juan Pablo and Niño Castillo, Jeisson Vicente and Muñoz Pertuz, Julián David and Monsalve Muñoz, Daniel and Osorio Agudelo, Sebastián},
+  year    = {2026},
   url     = {https://github.com/bancolombia/sentinel}
 }
 ```

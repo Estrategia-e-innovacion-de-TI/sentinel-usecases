@@ -13,8 +13,8 @@ Thank you for your interest in contributing to Sentinel! We welcome contribution
 
 1. Fork and clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/SLA-Analisis-logs-python.git
-cd SLA-Analisis-logs-python
+git clone https://github.com/YOUR_USERNAME/sentinel.git
+cd sentinel
 ```
 
 2. Install the package in development mode with development dependencies:

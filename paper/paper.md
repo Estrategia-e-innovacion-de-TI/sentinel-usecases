@@ -7,23 +7,32 @@ tags:
   - signal validation
   - enterprise logs
 authors:
-  - name: JM Vergara
+  - name: José Manuel Vergara Álvarez
+    orcid: 0000-0002-5401-5342
     affiliation: 1
-  - name: N Laverde
+  - name: Nicolás Laverde Manotas
+    orcid: 0009-0002-3578-694X
     affiliation: 1
-  - name: JP Aguilar
+  - name: Juan Pablo Aguilar Calle
+    orcid: 0009-0001-9109-393X
     affiliation: 1
-  - name: JV Niño
+  - name: Jeisson Vicente Niño Castillo
+    orcid: 0009-0009-2320-8246
     affiliation: 1
-  - name: JD Muñoz
+  - name: Julián David Muñoz Pertuz
+    orcid: 0009-0009-2320-8246
     affiliation: 1
-  - name: D Monsalve
+  - name: Daniel Monsalve Muñoz
+    orcid: 0009-0003-4775-2058
     affiliation: 1
-  - name: S Osorio
+  - name: Sebastián Osorio Agudelo
+    orcid: 0009-0004-9903-1807
     affiliation: 1
 affiliations:
-  - name: Bancolombia, Colombia
+  - name: Bancolombia, Medellín, Colombia
     index: 1
+    ror: 00bnfze52
+date: 4 March 2026
 bibliography: paper.bib
 ---
 
@@ -31,7 +40,7 @@ bibliography: paper.bib
 
 Sentinel is a Python library designed to address a critical challenge in enterprise log analysis: determining whether unstructured log data contains meaningful signals before investing computational resources in complex anomaly detection pipelines. Many organizations generate massive volumes of logs from systems such as WebSphere Application Server (WAS), Hardware Security Modules (HSM), High-Density Computing (HDC) platforms, and IBM Message Queue (IBMMQ), but not all log data contains actionable patterns for anomaly detection.
 
-The library's key innovation is the Explorer module, which performs early signal validation and data quality checks using techniques such as Interquartile Range (IQR) anomaly detection, correlation analysis, and variance thresholds. This fail-fast approach enables practitioners to quickly assess whether their log data is worth analyzing, potentially saving significant computational resources and development time. Sentinel provides a modular architecture spanning ingestion, transformation, exploration, detection, visualization, and simulation, with built-in parsers for common enterprise log formats and extensibility for custom implementations.
+The library's key innovation is the Explorer module, which performs early signal validation and data quality checks using techniques such as Interquartile Range (IQR) anomaly detection, correlation analysis, and variance thresholds. This fail-fast approach enables practitioners to quickly assess whether their log data is worth analyzing, potentially saving significant computational resources and development time. Sentinel provides a modular architecture spanning ingestion, transformation, exploration, detection, visualization, and simulation, with built-in parsers for common enterprise log formats and extensibility for custom implementations. It is built on top of pandas [@mckinney2010pandas] and scikit-learn [@pedregosa2011sklearn], with optional support for PyTorch [@paszke2019pytorch] for deep learning detectors.
 
 # Statement of Need
 
@@ -59,11 +68,11 @@ Sentinel implements a modular architecture that guides users through the complet
 
 **Explorer**: The Explorer module is Sentinel's key innovation, performing early signal validation and data quality checks. It uses IQR-based anomaly detection for initial assessment and evaluates multiple quality metrics: minimum records per column, label column presence, anomaly percentage thresholds, non-null value percentages, and variance thresholds. The module also performs point-biserial correlation analysis and evaluates logistic regression models on individual features to assess signal quality. Based on these checks, the Explorer module provides a fail-fast decision: proceed with analysis or reject the data.
 
-**Detectors**: The Detectors module implements multiple anomaly detection algorithms with a consistent interface: AutoencoderDetector (neural network-based reconstruction), IsolationForestDetector (tree-based isolation), RRCFDetector (Robust Random Cut Forest), and LNNDetector (Liquid Neural Networks). This unified interface enables algorithm comparison and selection based on specific use cases.
+**Detectors**: The Detectors module implements multiple anomaly detection algorithms with a consistent interface: IsolationForestDetector [@liu2008isolation] (tree-based isolation), RRCFDetector [@guha2016rrcf] (Robust Random Cut Forest for streaming data), AutoencoderDetector (LSTM autoencoder built on PyTorch [@paszke2019pytorch]), and LNNDetector (Liquid Neural Networks based on closed-form continuous-time models [@hasani2021liquid]). This unified interface enables algorithm comparison and selection based on specific use cases.
 
-**Visualization**: The Visualization module provides tools for displaying anomaly detection results and SHAP (SHapley Additive exPlanations) analysis, enabling interpretability of model decisions.
+**Visualization**: The Visualization module provides two complementary classes. `AnomalyVisualizer` renders anomaly scores over time using both static (matplotlib) and interactive (Plotly) charts, with support for threshold lines, score distribution histograms, and multi-feature overlays with anomaly markers. `SHAPVisualizer` wraps the SHAP library [@lundberg2017shap] to explain predictions of tree-based detectors through force plots, waterfall charts, beeswarm summaries, bar charts, and feature dependence scatter plots. Together, these tools enable practitioners to validate detection results visually and communicate findings to non-technical stakeholders.
 
-**Simulation**: The Simulation module includes the StreamingSimulation class for testing real-time anomaly detection scenarios, useful for validation and benchmarking.
+**Simulation**: The Simulation module includes the `StreamingSimulation` class for testing real-time anomaly detection scenarios. It feeds data in configurable chunks through a background thread, scores each chunk with an internal Isolation Forest, and renders a live-updating chart. Both static and dynamic (percentile-based) thresholds are supported. The module works in Jupyter notebooks via `run_notebook()` and in standalone scripts via `run()`, making it useful for both interactive exploration and automated benchmarking.
 
 The modular design enables practitioners to use individual components independently or combine them in custom workflows, supporting both exploratory analysis and production deployments.
 
@@ -83,6 +92,10 @@ The library's Apache 2.0 license, Code of Conduct, Contributing guidelines, and 
 
 # AI Usage Disclosure
 
-Generative AI tools may have been used for language refinement; authors reviewed and validated the final content.
+Generative AI tools (GitHub Copilot, Claude) were used during development for code scaffolding, docstring drafting, and language refinement of this paper. All AI-generated content was reviewed, tested, and validated by the authors. The test suite, architectural decisions, and domain-specific logic were designed and verified by the authors.
+
+# Acknowledgements
+
+The authors thank the Technology Innovation and Strategy team at Bancolombia for supporting the development of this library. <!-- TODO: Add specific grant numbers or program names if applicable. -->
 
 # References
