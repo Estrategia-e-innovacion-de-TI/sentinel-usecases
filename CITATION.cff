@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "Sentinel"
+title: "Sentinel: Signal Validation and Anomaly Detection for Enterprise Log Data"
 type: software
 version: "0.1.0"
 date-released: 2026-03-04
@@ -22,7 +22,7 @@ authors:
     orcid: "https://orcid.org/0009-0009-2320-8246"
   - family-names: "Muñoz Pertuz"
     given-names: "Julián David"
-    orcid: "https://orcid.org/0009-0009-2320-8246"
+    orcid: "https://orcid.org/0009-0006-0076-1696"
   - family-names: "Monsalve Muñoz"
     given-names: "Daniel"
     orcid: "https://orcid.org/0009-0003-4775-2058"

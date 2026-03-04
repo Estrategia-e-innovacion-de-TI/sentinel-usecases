@@ -1,5 +1,5 @@
 ---
-title: 'Sentinel: A Python Library for Log Analysis and Anomaly Detection'
+title: 'Sentinel: Signal Validation and Anomaly Detection for Enterprise Log Data'
 tags:
   - Python
   - log analysis
@@ -20,7 +20,7 @@ authors:
     orcid: 0009-0009-2320-8246
     affiliation: 1
   - name: Julián David Muñoz Pertuz
-    orcid: 0009-0009-2320-8246
+    orcid: 0009-0006-0076-1696
     affiliation: 1
   - name: Daniel Monsalve Muñoz
     orcid: 0009-0003-4775-2058
@@ -35,67 +35,76 @@ affiliations:
 date: 4 March 2026
 bibliography: paper.bib
 ---
-
+ 
 # Summary
-
-Sentinel is a Python library designed to address a critical challenge in enterprise log analysis: determining whether unstructured log data contains meaningful signals before investing computational resources in complex anomaly detection pipelines. Many organizations generate massive volumes of logs from systems such as WebSphere Application Server (WAS), Hardware Security Modules (HSM), High-Density Computing (HDC) platforms, and IBM Message Queue (IBMMQ), but not all log data contains actionable patterns for anomaly detection.
-
-The library's key innovation is the Explorer module, which performs early signal validation and data quality checks using techniques such as Interquartile Range (IQR) anomaly detection, correlation analysis, and variance thresholds. This fail-fast approach enables practitioners to quickly assess whether their log data is worth analyzing, potentially saving significant computational resources and development time. Sentinel provides a modular architecture spanning ingestion, transformation, exploration, detection, visualization, and simulation, with built-in parsers for common enterprise log formats and extensibility for custom implementations. It is built on top of pandas [@mckinney2010pandas] and scikit-learn [@pedregosa2011sklearn], with optional support for PyTorch [@paszke2019pytorch] for deep learning detectors.
-
+ 
+Modern enterprise systems generate large volumes of operational logs that contain information about system behavior, performance, and failure conditions. These logs are frequently used for troubleshooting, monitoring, and anomaly detection. However, raw logs are typically unstructured and heterogeneous, making it difficult to determine whether they contain meaningful signals for analytical methods. Applying anomaly detection algorithms without first validating the quality and informational content of the data can lead to misleading results or unnecessary computational costs.
+ 
+Sentinel is a Python library designed to address this challenge by introducing **early signal validation for enterprise logs prior to anomaly detection**. The library provides a modular pipeline that transforms unstructured logs into structured data, evaluates the presence of meaningful statistical signals, and applies anomaly detection algorithms only when the data meets predefined quality criteria. This fail-fast validation approach helps practitioners determine whether log datasets are suitable for anomaly analysis before investing effort in complex modeling pipelines.
+ 
+The library supports common enterprise log formats and provides tools for ingestion, transformation, signal validation, anomaly detection, visualization, and streaming simulation. Sentinel is implemented in Python and builds upon widely used scientific computing libraries including pandas [@mckinney2010pandas] and scikit-learn [@pedregosa2011sklearn], with optional deep learning detectors implemented using PyTorch [@paszke2019pytorch].
+ 
 # Statement of Need
-
-Enterprise environments generate vast quantities of unstructured log data from diverse systems, but a fundamental question often goes unaddressed: does this data contain meaningful signals for anomaly detection? Traditional approaches invest significant computational resources in building analysis pipelines before validating whether the underlying data exhibits patterns worth detecting. This can lead to wasted effort when log data lacks sufficient variance, contains predominantly null values, or shows no correlation with labeled anomalies.
-
-Sentinel addresses this gap by providing upfront signal validation through its Explorer module. Before practitioners commit to training models or deploying detection algorithms, Sentinel evaluates data quality metrics including minimum record counts, label presence, anomaly percentages, non-null value thresholds, and variance levels. This early validation is particularly valuable for enterprise log formats such as WAS, HSM, HDC, and IBMMQ, which often require custom parsing and may not consistently produce signal-rich data.
-
-By enabling a fail-fast approach to log analysis, Sentinel helps organizations avoid the computational and development costs associated with analyzing low-quality data. The library fills a gap between raw log collection and sophisticated anomaly detection tools, providing the critical validation step that determines whether further analysis is warranted.
-
+ 
+Enterprise infrastructures such as application servers, message brokers, security modules, and networking systems continuously produce operational logs. These logs often contain indicators of system failures, abnormal activity, or performance degradation. Detecting anomalies in log data is therefore an important task in operational monitoring, cybersecurity, and reliability engineering.
+ 
+Despite the extensive literature on anomaly detection methods [@chandola2009anomaly], a practical challenge often arises in real-world environments: **not all log data contains analyzable signals**. Logs may contain excessive missing values, constant fields, inconsistent timestamps, or insufficient variability to support meaningful detection algorithms. In such situations, applying machine learning models can produce unstable or misleading outputs.
+ 
+Most anomaly detection libraries focus on the modeling stage and assume that the input data already contains useful patterns. Libraries such as PyOD [@zhao2019pyod], ADTK [@adtk2019], pySAD [@yilmaz2021pysad], TODS [@lai2021tods], and Anomalib [@akcay2022anomalib] provide extensive implementations of detection algorithms, but they generally rely on pre-processed, signal-rich datasets.
+ 
+Sentinel addresses the earlier stage of the workflow: **determining whether a log dataset is suitable for anomaly detection in the first place**. The library evaluates signal quality metrics before applying detectors, enabling practitioners to avoid unnecessary modeling steps when the underlying data lacks informative structure. This approach is particularly valuable for enterprise logs, where large datasets may still contain limited analytical value.
+ 
 # State of the Field
-
-The anomaly detection ecosystem includes several mature libraries that provide diverse algorithms and robust implementations. PyOD [@zhao2019pyod] offers a comprehensive collection of outlier detection algorithms with a unified interface, while pySAD [@yilmaz2021pysad] focuses on streaming anomaly detection scenarios. ADTK [@adtk2019] provides specialized tools for time series anomaly detection, TODS [@lai2021tods] offers automated outlier detection with machine learning pipelines, and Anomalib [@akcay2022anomalib] delivers deep learning approaches for anomaly detection with a focus on computer vision applications.
-
-These tools excel at detecting anomalies in structured, signal-rich data where patterns are present and meaningful. However, they generally assume that input data has already been validated for quality and signal presence. In enterprise environments dealing with unstructured logs, this assumption may not hold—log data may lack sufficient variance, contain excessive null values, or show no correlation with known anomalies.
-
-Sentinel complements these existing tools by addressing the earlier stage of the analysis pipeline: determining whether log data is worth analyzing in the first place. Rather than competing with established anomaly detection libraries, Sentinel provides the validation layer that helps practitioners decide when to apply those tools. The library's built-in parsers for enterprise log formats (WAS, HSM, HDC, IBMMQ) and its extensible parser framework further differentiate it from general-purpose anomaly detection tools that assume pre-processed, structured input.
-
+ 
+The ecosystem of anomaly detection software has expanded significantly in recent years. PyOD [@zhao2019pyod] provides a unified interface for a wide range of outlier detection algorithms. ADTK [@adtk2019] focuses on time-series anomaly detection using rule-based and statistical techniques. pySAD [@yilmaz2021pysad] addresses streaming anomaly detection scenarios, while TODS [@lai2021tods] introduces automated machine learning pipelines for time-series outlier detection. Anomalib [@akcay2022anomalib] provides deep learning architectures primarily targeting computer vision applications.
+ 
+In the context of log analysis, research has also explored specialized anomaly detection techniques such as DeepLog, which applies recurrent neural networks to learn sequential patterns in system logs [@du2017deeplog]. Public datasets such as LogHub provide standardized benchmarks for evaluating log anomaly detection approaches [@he2020loghub].
+ 
+These tools and datasets have significantly advanced anomaly detection research. However, they typically assume that the dataset has already undergone preprocessing and validation. In many operational environments, the primary difficulty lies in determining whether the available logs contain sufficient information to justify anomaly detection.
+ 
+Sentinel complements existing tools by introducing a **signal validation stage before detection**. Rather than replacing existing anomaly detection libraries, Sentinel can be used alongside them to assess data suitability and prepare structured log datasets for downstream analysis.
+ 
 # Software Design
-
-Sentinel implements a modular architecture that guides users through the complete log analysis workflow:
-
-**Ingestion**: The Ingestion module transforms raw, unstructured log files into structured pandas DataFrames. It provides a base parser class for extensibility and includes specific parsers for WAS, HSM, HDC, and IBMMQ log formats. Custom parsers can be implemented by extending the base class to support additional log formats.
-
-**Transformer**: The Transformer module provides aggregation methods for time series and event data. The StringAggregator consolidates string values within defined time windows, while the RollingAggregator applies rolling window operations to prepare data for detection algorithms.
-
-**Explorer**: The Explorer module is Sentinel's key innovation, performing early signal validation and data quality checks. It uses IQR-based anomaly detection for initial assessment and evaluates multiple quality metrics: minimum records per column, label column presence, anomaly percentage thresholds, non-null value percentages, and variance thresholds. The module also performs point-biserial correlation analysis and evaluates logistic regression models on individual features to assess signal quality. Based on these checks, the Explorer module provides a fail-fast decision: proceed with analysis or reject the data.
-
-**Detectors**: The Detectors module implements multiple anomaly detection algorithms with a consistent interface: IsolationForestDetector [@liu2008isolation] (tree-based isolation), RRCFDetector [@guha2016rrcf] (Robust Random Cut Forest for streaming data), AutoencoderDetector (LSTM autoencoder built on PyTorch [@paszke2019pytorch]), and LNNDetector (Liquid Neural Networks based on closed-form continuous-time models [@hasani2021liquid]). This unified interface enables algorithm comparison and selection based on specific use cases.
-
-**Visualization**: The Visualization module provides two complementary classes. `AnomalyVisualizer` renders anomaly scores over time using both static (matplotlib) and interactive (Plotly) charts, with support for threshold lines, score distribution histograms, and multi-feature overlays with anomaly markers. `SHAPVisualizer` wraps the SHAP library [@lundberg2017shap] to explain predictions of tree-based detectors through force plots, waterfall charts, beeswarm summaries, bar charts, and feature dependence scatter plots. Together, these tools enable practitioners to validate detection results visually and communicate findings to non-technical stakeholders.
-
-**Simulation**: The Simulation module includes the `StreamingSimulation` class for testing real-time anomaly detection scenarios. It feeds data in configurable chunks through a background thread, scores each chunk with an internal Isolation Forest, and renders a live-updating chart. Both static and dynamic (percentile-based) thresholds are supported. The module works in Jupyter notebooks via `run_notebook()` and in standalone scripts via `run()`, making it useful for both interactive exploration and automated benchmarking.
-
-The modular design enables practitioners to use individual components independently or combine them in custom workflows, supporting both exploratory analysis and production deployments.
-
+ 
+Sentinel implements a modular architecture designed to support the complete lifecycle of enterprise log analysis. The system is organized into six core modules that can be used independently or combined into a unified pipeline.
+ 
+![Sentinel modular architecture for log analysis and anomaly detection.](figures/sentinel_architecture.png)
+ 
+| Module | Purpose | Techniques and Components |
+|------|------|------|
+| **Ingestion** | Convert raw log files into structured tabular data | Parsers for WAS, HSM, HDC, IBMMQ and ZTNA logs; extensible parser interface |
+| **Transformer** | Prepare logs for analysis | Time aggregation, rolling statistics, feature generation |
+| **Explorer** | Validate signal presence before anomaly detection | IQR anomaly checks, variance thresholds, label validation, correlation analysis |
+| **Detectors** | Apply anomaly detection algorithms | Isolation Forest [@liu2008isolation], Robust Random Cut Forest [@guha2016rrcf], LSTM Autoencoder, Liquid Neural Networks [@hasani2021liquid] |
+| **Visualization** | Interpret anomaly detection outputs | Time-series anomaly visualization and SHAP-based explainability [@lundberg2017shap] |
+| **Simulation** | Test streaming anomaly detection workflows | Real-time chunk processing and adaptive thresholds |
+ 
+The **Ingestion module** converts unstructured log files into structured tabular representations using pandas. Sentinel includes built-in parsers for enterprise systems such as WebSphere Application Server (WAS), Hardware Security Modules (HSM), High-Density Computing (HDC), IBM Message Queue (IBMMQ), and ZTNA logs. A base parser interface allows users to implement custom parsers for additional log formats.
+ 
+The **Transformer module** prepares structured logs for analysis by aggregating events into time windows and computing rolling statistics. These transformations allow event-based logs to be converted into feature matrices suitable for statistical or machine learning methods.
+ 
+The **Explorer module** is the central innovation of the library. It evaluates signal quality using statistical metrics including interquartile range (IQR) anomaly checks, variance thresholds, label presence validation, and correlation analysis. The module also evaluates simple predictive models on individual features to estimate signal relevance. Based on these metrics, the module provides a fail-fast decision indicating whether further analysis is justified.
+ 
+The **Detectors module** provides a unified interface for multiple anomaly detection algorithms. Implementations include Isolation Forest [@liu2008isolation], Robust Random Cut Forest [@guha2016rrcf], an LSTM-based autoencoder implemented with PyTorch [@paszke2019pytorch], and Liquid Neural Networks [@hasani2021liquid]. The unified interface enables practitioners to compare different algorithms within the same workflow.
+ 
+The **Visualization module** provides tools for analyzing anomaly detection results. Anomaly scores can be visualized as time-series plots with anomaly markers, and SHAP explanations can be used to interpret feature contributions to anomaly predictions.
+ 
+The **Simulation module** enables testing of anomaly detection pipelines in streaming scenarios. Data can be processed in configurable chunks to emulate real-time ingestion pipelines, allowing practitioners to evaluate detection strategies under operational conditions.
+ 
 # Research Impact Statement
-
-Sentinel provides value to the research and practitioner communities through several engineering contributions:
-
-**Reproducibility**: The library includes a comprehensive test suite with continuous integration, documented installation procedures, and example notebooks demonstrating usage patterns. This infrastructure enables researchers and practitioners to validate results and build upon the work.
-
-**Modularity and Extensibility**: Sentinel's architecture separates concerns through distinct modules, each with clear responsibilities. The base parser class enables custom implementations for new log formats, and the unified detector interface allows algorithm comparison and extension. This design supports both research experimentation and production deployment.
-
-**Enterprise Log Format Support**: By providing built-in parsers for WAS, HSM, HDC, and IBMMQ formats, Sentinel addresses real-world enterprise needs. These parsers handle the complexity of unstructured log formats, enabling practitioners to focus on analysis rather than data wrangling.
-
-**Practical Value**: The fail-fast validation approach provides concrete benefits by identifying unsuitable data early in the analysis pipeline. This prevents wasted computational resources on low-quality data and helps organizations make informed decisions about where to invest analysis effort. While specific resource savings depend on individual use cases, the engineering principle of early validation is well-established in software development and applies directly to data analysis workflows.
-
-The library's Apache 2.0 license, Code of Conduct, Contributing guidelines, and Security policy establish a foundation for open collaboration and responsible development, supporting both academic research and industrial applications.
-
+ 
+Sentinel contributes to research and operational practice by introducing a structured approach to **signal validation in log-based anomaly detection workflows**. By identifying datasets that lack sufficient statistical signal before applying computationally intensive models, the library helps practitioners focus analytical effort on data that can produce meaningful insights.
+ 
+The modular architecture promotes reproducibility and extensibility. Researchers can experiment with different detectors while maintaining consistent preprocessing and validation steps. The parser interface enables support for additional log formats, allowing the library to adapt to new operational environments.
+ 
+Support for enterprise log formats also addresses a practical gap between academic anomaly detection research and real-world operational data. Many anomaly detection studies rely on curated benchmark datasets, whereas production logs often require extensive preprocessing. Sentinel provides tools that bridge this gap, enabling researchers and practitioners to experiment with anomaly detection on real operational logs.
+ 
 # AI Usage Disclosure
-
-Generative AI tools (GitHub Copilot, Claude) were used during development for code scaffolding, docstring drafting, and language refinement of this paper. All AI-generated content was reviewed, tested, and validated by the authors. The test suite, architectural decisions, and domain-specific logic were designed and verified by the authors.
-
+ 
+Generative AI tools were used to assist with code scaffolding, documentation drafting, and language refinement during the development of this software and manuscript. All generated content was reviewed, validated, and modified as necessary by the authors, who assume full responsibility for the accuracy and integrity of the work.
+ 
 # Acknowledgements
-
-The authors thank the Technology Innovation and Strategy team at Bancolombia for supporting the development of this library. <!-- TODO: Add specific grant numbers or program names if applicable. -->
-
+ 
+The authors thank the Technology Innovation team (ARQUITECTURA INNOVACION TI) at Bancolombia for supporting the development of Sentinel and for providing feedback during the design of the library.
+ 
 # References
