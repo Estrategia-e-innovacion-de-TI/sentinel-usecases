@@ -64,6 +64,11 @@ class StringAggregator:
         ValueError
             If a specified column does not exist in the DataFrame.
         """
+        # Keep a copy of the timestamp so inner functions can access it
+        # even after pd.Grouper consumes the column as the grouping key.
+        ts_col_backup = f"__{self.timestamp_column}_ts"
+        self.df[ts_col_backup] = self.df[self.timestamp_column]
+
         # Group by time window
         grouped = self.df.groupby(pd.Grouper(key=self.timestamp_column, freq=time_window))
         
@@ -113,7 +118,7 @@ class StringAggregator:
         def avg_time_between_events(group):
             if len(group) <= 1:
                 return 0
-            times = group[self.timestamp_column].sort_values()
+            times = group[ts_col_backup].sort_values()
             diffs = times.diff().dropna()
             return diffs.dt.total_seconds().mean()
         
@@ -121,14 +126,14 @@ class StringAggregator:
         def min_time_between_events(group):
             if len(group) <= 1:
                 return 0
-            times = group[self.timestamp_column].sort_values()
+            times = group[ts_col_backup].sort_values()
             diffs = times.diff().dropna()
             return diffs.dt.total_seconds().min()
         
         def max_time_between_events(group):
             if len(group) <= 1:
                 return 0
-            times = group[self.timestamp_column].sort_values()
+            times = group[ts_col_backup].sort_values()
             diffs = times.diff().dropna()
             return diffs.dt.total_seconds().max()
         
@@ -141,6 +146,9 @@ class StringAggregator:
             for metric_name, metric_func in custom_metrics.items():
                 results[metric_name] = grouped.apply(metric_func)
         
+        # Clean up the internal backup column
+        self.df.drop(columns=[ts_col_backup], inplace=True, errors='ignore')
+
         return results
 
 # Ejemplo de uso

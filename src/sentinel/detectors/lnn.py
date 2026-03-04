@@ -53,18 +53,17 @@ class LNNEncoder(nn.Module):
     def forward(self, x):
         """
         Forward pass of the LNN encoder model.
-        
+
         Args:
+            x (torch.Tensor): Input features of shape (seq_len * n_features,)
 
-            x (torch.Tensor): Input features
-            
         Returns:
-
-            torch.Tensor: Latent space representation
+            torch.Tensor: Latent space representation of shape (1, latent_dim)
         """
         x = x.reshape((1, self.seq_len, self.n_features))
         output, _ = self.rnn(x)
-        return output[:, -1, :].reshape((self.n_features, self.latent_dim))
+        # output[:, -1, :] shape: (1, latent_dim)
+        return output[:, -1, :].reshape((1, self.latent_dim))
 
 
 class Decoder(nn.Module):
@@ -99,22 +98,20 @@ class Decoder(nn.Module):
     def forward(self, x):
         """
         Forward pass of the decoder model.
-        
+
         Args:
+            x (torch.Tensor): Latent space representation of shape (1, input_dim)
 
-            x (torch.Tensor): Latent space representation
-        
         Returns:
-
-            torch.Tensor: Output features
+            torch.Tensor: Output features of shape (seq_len * n_features,)
         """
-        x = x.repeat(self.seq_len, self.n_features)
-        
-        x = x.reshape((self.n_features, self.seq_len, self.input_dim))
+        # x shape: (1, input_dim) → repeat to (1, seq_len, input_dim)
+        x = x.unsqueeze(1).repeat(1, self.seq_len, 1)
         x, (hidden_n, cell_n) = self.rnn(x)
+        # x shape: (1, seq_len, hidden_dim) → (seq_len, hidden_dim)
         x = x.reshape((self.seq_len, self.hidden_dim))
-
-        return self.output_layer(x)
+        # output shape: (seq_len, n_features) → flatten
+        return self.output_layer(x).reshape(-1)
 
 
 class LNNAutoencoder(nn.Module):
@@ -212,11 +209,13 @@ class LNNDetector:
 
             dict: Training history
         """
-        # Use input data directly without scaling
-        X_tensor = torch.tensor(X, dtype=torch.float32)
+        self.scaler = self.scaler.fit(X)
+        X_scaled = self.scaler.transform(X)
+        X_tensor = torch.tensor(X_scaled, dtype=torch.float32)
         
         if X_test is not None:
-            X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+            X_test_scaled = self.scaler.transform(X_test)
+            X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32)
         
         best_loss = float('inf')
         best_model_wts = copy.deepcopy(self.model.state_dict())

@@ -52,18 +52,17 @@ class Encoder(nn.Module):
     def forward(self, x):
         """
         Forward pass of the encoder model.
-        
-        Args:
-            x (torch.Tensor): Input features
-            
-        Returns:
 
-            torch.Tensor: Latent space representation
+        Args:
+            x (torch.Tensor): Input features of shape (seq_len * n_features,)
+
+        Returns:
+            torch.Tensor: Latent space representation of shape (1, latent_dim)
         """
         x = x.reshape((1, self.seq_len, self.n_features))
         _, (hidden_n, _) = self.rnn(x)
-        
-        return hidden_n.reshape((self.n_features, self.latent_dim))
+        # hidden_n shape: (num_layers=1, batch=1, latent_dim)
+        return hidden_n.reshape((1, self.latent_dim))
     
 
 class Decoder(nn.Module):
@@ -98,22 +97,20 @@ class Decoder(nn.Module):
     def forward(self, x):
         """
         Forward pass of the decoder model.
-        
+
         Args:
+            x (torch.Tensor): Latent space representation of shape (1, input_dim)
 
-            x (torch.Tensor): Latent space representation
-        
         Returns:
-
-            torch.Tensor: Output features
+            torch.Tensor: Output features of shape (seq_len * n_features,)
         """
-        x = x.repeat(self.seq_len, self.n_features)
-        
-        x = x.reshape((self.n_features, self.seq_len, self.input_dim))
+        # x shape: (1, input_dim) → repeat to (1, seq_len, input_dim)
+        x = x.unsqueeze(1).repeat(1, self.seq_len, 1)
         x, (hidden_n, cell_n) = self.rnn(x)
+        # x shape: (1, seq_len, hidden_dim) → (seq_len, hidden_dim)
         x = x.reshape((self.seq_len, self.hidden_dim))
-
-        return self.output_layer(x)
+        # output shape: (seq_len, n_features) → flatten
+        return self.output_layer(x).reshape(-1)
 
 class Autoencoder(nn.Module):
     """
@@ -198,21 +195,24 @@ class AutoencoderDetector:
     def fit(self, X, X_test=None):
         """
         Fit the anomaly detector to the input data.
-        
-        Args:
 
+        Args:
             X (np.ndarray): Input data for training the model
+            X_test (np.ndarray, optional): Test data for validation
+
+        Returns:
+            dict: Best model weights
         """
         self.scaler = self.scaler.fit(X)
         X_scaled = self.scaler.transform(X)
         X_scaled = torch.tensor(X_scaled, dtype=torch.float32)
         X_test_scaled = self.scaler.transform(X_test) if X_test is not None else None
         X_test_scaled = torch.tensor(X_test_scaled, dtype=torch.float32) if X_test is not None else None
-        
+
         self.model = self.model.to(self.device)
-        
+
         best_loss = np.inf
-        
+
         for epoch in range(self.epochs):
             self.model = self.model.train()
 
@@ -220,7 +220,6 @@ class AutoencoderDetector:
             for seq_true in X_scaled:
                 seq_true = seq_true.to(self.device)
                 seq_pred = self.model(seq_true)
-                seq_pred = seq_pred.reshape((seq_pred.shape[0],))
                 loss = self.criterion(seq_pred, seq_true)
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -229,39 +228,39 @@ class AutoencoderDetector:
                 train_losses.append(loss.item())
 
             val_losses = []
-            if X_test is not None:
+            if X_test_scaled is not None:
                 self.model = self.model.eval()
                 with torch.no_grad():
-                    for seq_true in X_test:
-
+                    for seq_true in X_test_scaled:
                         seq_true = seq_true.to(self.device)
                         seq_pred = self.model(seq_true)
-                        seq_pred = seq_pred.reshape((seq_pred.shape[0],))
                         loss = self.criterion(seq_pred, seq_true)
                         val_losses.append(loss.item())
                 val_loss = np.mean(val_losses)
                 print(f'Epoch {epoch}, Train Loss: {np.mean(train_losses):.4f}, Val Loss: {val_loss:.4f}')
-            
+
             train_loss = np.mean(train_losses)
             print(f'Epoch {epoch}, Train Loss: {train_loss:.4f}')
 
             if train_loss < best_loss:
                 best_loss = train_loss
                 best_model_wts = copy.deepcopy(self.model.state_dict())
-        
+
+        # Load best weights and calculate threshold
+        self.model.load_state_dict(best_model_wts)
+        self._calculate_threshold(X_scaled)
+
         return best_model_wts
         
     
     def _calculate_threshold(self, X_scaled):
         """
         Calculate the anomaly threshold.
-        
+
         Args:
+            X_scaled (np.ndarray or torch.Tensor): Scaled input data
 
-            X_scaled (np.ndarray): Scaled input data
-            
         Returns:
-
             float: Anomaly threshold
         """
         self.model.eval()
@@ -269,67 +268,63 @@ class AutoencoderDetector:
             X_tensor = torch.FloatTensor(X_scaled).to(self.device)
         else:
             X_tensor = X_scaled.to(self.device)
-            
-        with torch.no_grad():
-            X_pred = self.model(X_tensor).cpu().detach().numpy()
-        
+
         X_numpy = X_scaled.cpu().numpy() if isinstance(X_scaled, torch.Tensor) else X_scaled
+
+        preds = []
+        with torch.no_grad():
+            for seq_true in X_tensor:
+                seq_pred = self.model(seq_true)
+                preds.append(seq_pred.cpu().numpy())
+
+        X_pred = np.array(preds)
         mse = np.mean(np.square(X_numpy - X_pred), axis=1)
         self.threshold = np.mean(mse) + self.threshold_multiplier * np.std(mse)
-        
+
         return self.threshold
         
     def predict(self, X):
         """
         Predict anomalies in the input data.
-        
+
         Args:
-
             X (np.ndarray): Input data for anomaly detection
-            
-        Returns:
 
+        Returns:
             np.ndarray: Binary array where 1 indicates anomaly, 0 indicates normal
         """
-        X_scaled = self.scaler.transform(X)
-        X_tensor = torch.FloatTensor(X_scaled).to(self.device)
-        
-        self.model.eval()
-        
-        with torch.no_grad():
-            X_pred = self.model(X_tensor).cpu().detach().numpy()
-        
-        mse = np.mean(np.square(X_scaled - X_pred), axis=1)
-        
+        scores = self.anomaly_score(X)
+
         if self.threshold is None:
+            X_scaled = self.scaler.transform(X)
             self._calculate_threshold(X_scaled)
-        
-        anomalies = (mse > self.threshold).astype(int)
-        
-        return anomalies
+
+        return (scores > self.threshold).astype(int)
     
     def anomaly_score(self, X):
         """
         Calculate anomaly scores for the input data.
-        
+
         Args:
-
             X (np.ndarray): Input data for anomaly detection
-        
-        Returns:
 
-            np.ndarray: Anomaly scores
+        Returns:
+            np.ndarray: Anomaly scores (MSE per sample)
         """
         X_scaled = self.scaler.transform(X)
         X_tensor = torch.FloatTensor(X_scaled).to(self.device)
-        
+
         self.model.eval()
-        
+
+        preds = []
         with torch.no_grad():
-            X_pred = self.model(X_tensor).cpu().detach().numpy()
-        
+            for seq_true in X_tensor:
+                seq_pred = self.model(seq_true)
+                preds.append(seq_pred.cpu().numpy())
+
+        X_pred = np.array(preds)
         mse = np.mean(np.square(X_scaled - X_pred), axis=1)
-        
+
         return mse
     
     def save_model(self, path):
