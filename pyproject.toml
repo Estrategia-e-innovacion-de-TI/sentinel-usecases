@@ -27,6 +27,13 @@ viz = [
     "shap>=0.44.0",
 ]
 rrcf = ["rrcf>=0.4.0"]
+docs = [
+    "sphinx>=7",
+    "furo",
+    "sphinx-copybutton",
+    "myst-parser",
+    "sphinx-autodoc-typehints",
+]
 all = [
     "sentinel[dev,deep,viz,rrcf]",
 ]

@@ -4,28 +4,15 @@ Thank you for your interest in contributing to Sentinel! We welcome contribution
 
 ## Development Setup
 
-### Prerequisites
+For detailed environment setup instructions, prerequisites, and troubleshooting, see the [Getting Started Guide](GETTINGSTARTED.md).
 
-- Python 3.10 or higher
-- Git
+Quick setup:
 
-### Installation
-
-1. Fork and clone the repository:
 ```bash
 git clone https://github.com/YOUR_USERNAME/sentinel.git
 cd sentinel
-```
-
-2. Install the package in development mode with development dependencies:
-```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-```
-
-### Running Tests
-
-Run the test suite using:
-```bash
 pytest -q
 ```
 
@@ -47,12 +34,59 @@ Use descriptive branch names that indicate the purpose of your changes:
 - `fix/bug-description` for bug fixes
 - `docs/documentation-update` for documentation changes
 
-### Commit Message Guidelines
+### Commit Message Standard
 
-Write clear, concise commit messages that describe what your changes do:
-- Use the imperative mood ("Add feature" not "Added feature")
-- Keep the first line under 50 characters
-- Provide additional context in the body if needed
+Commit messages must follow this structure:
+
+```
+<type>(<scope>)!: <description>
+```
+
+Where:
+
+- `<type>` (required): Indicates the category of the change. Allowed values:
+
+  | Type | Description |
+  |------|-------------|
+  | `feat` | New feature |
+  | `fix` | Bug fix |
+  | `docs` | Documentation changes |
+  | `style` | Formatting changes (spaces, commas, etc.) with no code impact |
+  | `refactor` | Code restructuring without changing functionality |
+  | `perf` | Performance improvements |
+  | `test` | Adding or modifying tests |
+  | `build` | Changes to the build system or dependencies |
+  | `ci` | Continuous integration configuration |
+  | `removed` | Deleted code |
+  | `deprecated` | Code marked as obsolete |
+  | `security` | Security-related changes |
+  | `chore` | Maintenance tasks or minor refactoring |
+
+  Release-specific types:
+
+  | Type | Description |
+  |------|-------------|
+  | `featurerelease` | New feature release |
+  | `securitypatchrelease` | Security patch |
+  | `fixpatchrelease` | Bug fix patch |
+  | `breakingrelease` | Release with breaking changes |
+  | `breaking` | Incompatible / breaking change |
+
+- `(<scope>)` (optional): Specifies which part of the codebase is affected. Can be a module, file, or specific component (e.g., `ingestion`, `detectors`, `explorer`).
+
+- `!` (optional): Indicates the change is significant or has a major impact.
+
+- `<description>` (required): A brief description of the change.
+
+Examples:
+
+```
+feat(detectors): add RRCFDetector streaming support
+fix(transformer): resolve KeyError in StringAggregator groupby
+docs: update README with new visualization methods
+refactor(explorer)!: redesign QualityReport API
+ci: add Python 3.12 to test matrix
+```
 
 ### Pull Request Process
 
@@ -61,6 +95,60 @@ Write clear, concise commit messages that describe what your changes do:
 3. Describe your changes clearly in the pull request description
 4. Link any related issues
 5. Wait for review from maintainers
+
+## Issue Labeling
+
+Labels on GitHub Issues are a fundamental part of efficient project management. They enable clear, practical communication and make issue administration more transparent for all contributors interacting with the repository.
+
+We classify issues to improve visibility and help contributors quickly identify the type of work involved (bug, vulnerability, documentation, etc.).
+
+> Labels are grouped by a prefix and an associated color for easy identification.
+
+### Category Labels
+
+Prefix `c:` (green) — classifies issues by their nature:
+
+| Label | Description |
+|-------|-------------|
+| `c: documentation` | Related to documentation |
+| `c: feature` | Related to a new feature or enhancement |
+| `c: vulnerability` | Related to a detected vulnerability |
+| `c: bug` | Related to a bug or error |
+
+### General Labels
+
+Prefix `g:` (light blue) — generic labels for organizing and tracking:
+
+| Label | Description |
+|-------|-------------|
+| `g: good first issue` | A good entry point for first-time contributors |
+| `g: help wanted` | Needs someone to be assigned |
+| `g: in triage` | Under initial analysis before assignment |
+| `g: assigned for triage` | Escalated to an expert for deeper analysis before assignment |
+| `g: question` | The issue is more of a question than a problem |
+
+### Resolution Labels
+
+Prefix `r:` (red) — closure labels to finalize an issue:
+
+| Label | Description |
+|-------|-------------|
+| `r: duplicate` | Closed because another issue reports the same problem |
+| `r: fixed` | Closed because the fix is being addressed in another issue |
+| `r: solved` | Closed because the solution was implemented from another issue |
+| `r: invalid` | Closed because the issue is invalid |
+| `r: timeout` | Closed because the author did not provide details within the expected time |
+| `r: wontfix` | Closed because it will not be fixed |
+
+## Triage Process
+
+Triage is the initial state of every issue or report created on GitHub. It is the first filter before a collaborator addresses it. The initial validation reviews the arguments provided, assesses urgency, and then assigns a classification along with the appropriate descriptive labels.
+
+The triage process as the first step for every report allows us to filter out poorly created reports, missing arguments, duplicates, and critical/urgent items, so they can then receive proper attention.
+
+At the community or project level, this first control over issues enables solid and transparent ticket management. It helps prioritize and respond to requests according to their urgency, based on the classification assigned during triage.
+
+> Triage analysis is performed by community members who hold the **Maintainer** role.
 
 ## Code Style
 
