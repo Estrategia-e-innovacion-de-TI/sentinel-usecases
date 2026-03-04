@@ -7,8 +7,7 @@ import queue
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import IsolationForest
 import matplotlib
-matplotlib.use('QT5Agg')  # Use a non-interactive backend
-import matplotlib.pyplot as plt  # Import pyplot for plotting
+import matplotlib.pyplot as plt
 
 class StreamingDataManager:
     """
@@ -494,6 +493,124 @@ class StreamingSimulation:
 
         stream_thread.join()
         process_thread.join()
+
+    # ------------------------------------------------------------------
+    # Jupyter-compatible animation
+    # ------------------------------------------------------------------
+
+    def run_notebook(self, max_steps=None):
+        """Run the streaming simulation inside a Jupyter notebook.
+
+        Uses ``IPython.display.clear_output`` to animate the chart
+        inline.  Each iteration clears the previous frame and redraws,
+        producing a live-updating plot in the notebook output cell.
+
+        Parameters
+        ----------
+        max_steps : int or None, optional
+            Maximum number of chunks to process.  ``None`` means
+            process all data.
+        """
+        from IPython.display import display, clear_output
+
+        self.streaming_active = True
+        self.historical_data = pd.DataFrame()
+        self.historical_scores = np.array([])
+
+        n_chunks = len(self.data_source) // self.chunk_size
+        if max_steps is not None:
+            n_chunks = min(n_chunks, max_steps)
+
+        fig, ax = plt.subplots(figsize=(13, 5))
+
+        for step in range(n_chunks):
+            start = step * self.chunk_size
+            end = start + self.chunk_size
+            chunk = self.data_source.iloc[start:end]
+
+            # Accumulate history
+            self.historical_data = pd.concat([self.historical_data, chunk]).iloc[-5000:]
+            processed_window = self.preprocess(
+                self.historical_data.iloc[-self.window_size:]
+            )
+
+            # Train on first full window
+            if not self.detector.trained and len(processed_window) >= self.detector.window_size:
+                self.detector.fit(processed_window)
+
+            if self.detector.trained:
+                predictions, scores = self.detector.detect(self.preprocess(chunk))
+                self.historical_scores = np.append(self.historical_scores, scores)
+            else:
+                continue  # not enough data yet
+
+            # Filter to last 3 hours for display
+            self.historical_data.index = pd.to_datetime(self.historical_data.index)
+            three_h_ago = self.historical_data.index[-1] - pd.Timedelta(hours=3)
+            vis_data = self.historical_data[self.historical_data.index >= three_h_ago]
+            n_vis = len(vis_data)
+            if len(self.historical_scores) >= n_vis:
+                vis_scores = self.historical_scores[-n_vis:]
+            else:
+                vis_scores = np.pad(
+                    self.historical_scores,
+                    (n_vis - len(self.historical_scores), 0),
+                    constant_values=0,
+                )
+
+            neg_scores = vis_scores * -1
+            current_thr = (
+                self._calculate_dynamic_threshold()
+                if self.dynamic_threshold
+                else self.threshold
+            )
+
+            # --- draw frame ---
+            clear_output(wait=True)
+            ax.clear()
+            ax.plot(vis_data.index, neg_scores, color='steelblue', linewidth=0.8,
+                    label='Anomaly Score')
+            ax.axhline(y=current_thr, color='orange', linestyle='--', linewidth=1.2,
+                       label=f'Threshold ({current_thr:.3f})')
+
+            # Anomaly markers
+            anom_mask = neg_scores > current_thr
+            if anom_mask.any():
+                ax.scatter(
+                    vis_data.index[anom_mask], neg_scores[anom_mask],
+                    color='red', s=25, zorder=5, label='Anomaly',
+                )
+
+            # Event bands
+            if self.events is not None:
+                for _, ev in self.events.iterrows():
+                    ev_start = pd.to_datetime(ev['start'])
+                    ev_end = pd.to_datetime(ev['end'])
+                    if ev_start <= vis_data.index[-1] and ev_end >= vis_data.index[0]:
+                        ax.axvspan(ev_start, ev_end, color=ev['color'], alpha=0.25)
+                        ax.axvline(x=ev_start, color=ev['color'], linestyle='--', linewidth=0.8)
+                        mid = ev_start + (ev_end - ev_start) / 2
+                        ax.text(mid, ax.get_ylim()[1] * 0.95, ev['label'],
+                                ha='center', fontsize=7, color=ev['color'])
+
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Anomaly Score')
+            ax.set_title(f'Streaming Anomaly Detection  —  chunk {step+1}/{n_chunks}')
+            ax.legend(loc='upper left', fontsize=8)
+            fig.autofmt_xdate()
+            fig.tight_layout()
+            display(fig)
+
+            time.sleep(self.stream_interval)
+
+        self.streaming_active = False
+        clear_output(wait=True)
+        # Final frame stays visible
+        ax.set_title('Streaming Anomaly Detection  —  complete')
+        display(fig)
+        plt.close(fig)
+        print(f"Simulation complete. Processed {n_chunks} chunks, "
+              f"total anomaly scores: {len(self.historical_scores)}")
 
 
 if __name__ == "__main__":

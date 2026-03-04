@@ -1,10 +1,9 @@
 """Statistical drift detection utilities."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from scipy.stats import ks_2samp
 
 
 def detect_drift(
@@ -41,6 +40,8 @@ def detect_drift(
     reference = series[:window]
 
     for i in range(window, len(series) - window + 1, window):
+        from scipy.stats import ks_2samp
+
         test = series[i : i + window]
         stat, p = ks_2samp(reference, test)
         results.append({

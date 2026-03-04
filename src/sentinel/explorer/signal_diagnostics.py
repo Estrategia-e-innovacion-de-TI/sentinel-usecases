@@ -2,16 +2,15 @@
 
 Provides programmatic access to data quality checks without
 requiring pytest as a runtime dependency.
+
+Heavy dependencies (scipy, sklearn) are imported lazily so that
+lightweight functions like ``detect_anomalies`` stay fast.
 """
 
 from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import pointbiserialr
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import recall_score
-from sklearn.model_selection import train_test_split
 
 from .report import CheckResult, QualityReport
 from .thresholds import Thresholds
@@ -140,6 +139,8 @@ class SignalDiagnostics:
 
         # Label-dependent checks
         if self.label_column and self.label_column in self.df.columns:
+            from scipy.stats import pointbiserialr
+
             for col in self.columns:
                 corr, _ = pointbiserialr(self.df[self.label_column], self.df[col])
                 checks.append(CheckResult("correlation", abs(corr) >= t.correlation_threshold, abs(corr), t.correlation_threshold, col))
@@ -160,6 +161,8 @@ class SignalDiagnostics:
         for col in self.columns:
             entry: dict = {}
             if self.label_column and self.label_column in self.df.columns:
+                from scipy.stats import pointbiserialr
+
                 corr, p = pointbiserialr(self.df[self.label_column], self.df[col])
                 entry["point_biserial"] = round(float(corr), 4)
                 entry["p_value"] = float(p)
@@ -207,8 +210,12 @@ class SignalDiagnostics:
         if not self.label_column or self.label_column not in self.df.columns:
             return {}
 
+        from sklearn.linear_model import LogisticRegression as _LR
+        from sklearn.metrics import recall_score
+        from sklearn.model_selection import train_test_split
+
         if model is None:
-            model = LogisticRegression()
+            model = _LR()
 
         result: Dict[str, dict] = {}
         for col in self.columns:
@@ -235,14 +242,17 @@ class SignalDiagnostics:
         -------
         dict
             Keys: ``summary``, ``quality_report``, ``correlation``,
-            ``anomaly_distribution``, ``predictive_power``.
+            ``anomaly_distribution``, ``predictive_power``,
+            ``interpretation``.
         """
+        qr = self.quality_report(thresholds)
         return {
             "summary": self.summary(),
-            "quality_report": self.quality_report(thresholds),
+            "quality_report": qr,
             "correlation": self.correlation_report(),
             "anomaly_distribution": self.anomaly_distribution(),
             "predictive_power": self.predictive_power(),
+            "interpretation": qr.interpret(),
         }
 
     def score_distribution(self, detector, X: pd.DataFrame) -> np.ndarray:
