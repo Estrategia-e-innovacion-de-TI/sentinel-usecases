@@ -4,17 +4,39 @@ version = "0.1.0"
 description = "Signal validation and anomaly detection for log data"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
 dependencies = [
-    "ipykernel>=6.29.5",
     "matplotlib>=3.10.0",
     "numpy>=2.2.3",
     "pandas>=2.2.3",
     "scikit-learn>=1.6.1",
+    "scipy>=1.12.0",
+    "setuptools<81",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7",
     "pytest-cov>=4",
+    "ipykernel>=6.29.5",
+    "nbformat>=4.2.0",
 ]
-deep = ["torch>=2.6.0"]
+deep = ["torch>=2.6.0", "ncps>=0.0.7"]
+viz = [
+    "plotly>=5.0.0",
+    "shap>=0.44.0",
+]
+rrcf = ["rrcf>=0.4.0"]
+docs = [
+    "sphinx>=7",
+    "furo",
+    "sphinx-copybutton",
+    "myst-parser",
+    "sphinx-autodoc-typehints",
+]
+all = [
+    "sentinel[dev,deep,viz,rrcf]",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
