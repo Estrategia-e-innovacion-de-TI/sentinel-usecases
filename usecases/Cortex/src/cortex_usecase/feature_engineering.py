@@ -204,7 +204,7 @@ def _stability_guess(series: pd.Series) -> str:
     if non_null.empty:
         return "No observable con el dataset actual."
 
-    cardinality = non_null.nunique(dropna=True)
+    cardinality = _hashable_series(non_null).nunique(dropna=True)
     uniqueness_ratio = cardinality / max(len(non_null), 1)
     if pd.api.types.is_numeric_dtype(non_null):
         return "Variable continua o de alta granularidad."
@@ -380,7 +380,7 @@ def build_schema_profile(dataframe: pd.DataFrame, max_examples: int = 3) -> pd.D
     for column in dataframe.columns:
         series = dataframe[column]
         non_null = int(series.notna().sum())
-        cardinality = int(series.dropna().nunique()) if non_null else 0
+        cardinality = int(_hashable_series(series).dropna().nunique()) if non_null else 0
         examples = [str(value)[:120] for value in series.dropna().astype(str).head(max_examples).tolist()]
         hint = _field_hint(column)
         rows.append(
@@ -397,6 +397,22 @@ def build_schema_profile(dataframe: pd.DataFrame, max_examples: int = 3) -> pd.D
         )
 
     return pd.DataFrame(rows).sort_values(["null_pct", "cardinality", "field"]).reset_index(drop=True)
+
+
+def _make_hashable(value: Any) -> Any:
+    """Normalize nested values so they can be counted safely by pandas."""
+    if isinstance(value, list):
+        return tuple(_make_hashable(item) for item in value)
+    if isinstance(value, dict):
+        return tuple(sorted((key, _make_hashable(item)) for key, item in value.items()))
+    if isinstance(value, set):
+        return tuple(sorted(_make_hashable(item) for item in value))
+    return value
+
+
+def _hashable_series(series: pd.Series) -> pd.Series:
+    """Convert non-scalar values into hashable equivalents for uniqueness checks."""
+    return series.map(_make_hashable)
 
 
 def build_field_interpretation_table(dataframe: pd.DataFrame) -> pd.DataFrame:

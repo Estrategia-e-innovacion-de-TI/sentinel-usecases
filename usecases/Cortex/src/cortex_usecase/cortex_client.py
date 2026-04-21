@@ -10,6 +10,7 @@ import string
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Sequence
+from urllib.parse import urlsplit
 
 import pandas as pd
 import requests
@@ -74,6 +75,14 @@ class CortexClientConfig:
 
         if not self.base_url.startswith(("https://", "http://")):
             raise CortexConfigurationError("XDR_BASE_URL must include the URL scheme, e.g. https://api-{fqdn}.")
+
+        parsed_base_url = urlsplit(self.base_url)
+        if not parsed_base_url.netloc:
+            raise CortexConfigurationError("XDR_BASE_URL must include a valid host, e.g. https://api-{fqdn}.")
+
+        # Keep only the API origin so users can paste vendor URLs that include an endpoint path.
+        self.base_url = f"{parsed_base_url.scheme}://{parsed_base_url.netloc}"
+
         if not self.api_key_id:
             raise CortexConfigurationError("XDR_API_KEY_ID is required.")
         if not self.api_key:

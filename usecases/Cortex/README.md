@@ -56,19 +56,19 @@ pip install -e ".[viz,rrcf]"
 Requeridas para extracción real:
 
 ```bash
-XDR_BASE_URL=https://api-{tu-fqdn}
-XDR_API_KEY_ID=1234
-XDR_API_KEY=...
+export XDR_BASE_URL="https://api-{tu-fqdn}"
+export XDR_API_KEY_ID="1234"
+export XDR_API_KEY="..."
 ```
 
 Opcionales:
 
 ```bash
-XDR_AUTH_MODE=advanced   # advanced | standard
-XDR_VERIFY_SSL=true
-XDR_TIMEOUT_SECONDS=30
-XDR_PAGE_SIZE=100
-XDR_REQUEST_INTERVAL_SECONDS=0.12
+export XDR_AUTH_MODE="advanced"   # advanced | standard
+export XDR_VERIFY_SSL="true"
+export XDR_TIMEOUT_SECONDS="30"
+export XDR_PAGE_SIZE="100"
+export XDR_REQUEST_INTERVAL_SECONDS="0.12"
 ```
 
 ## Exploración rápida

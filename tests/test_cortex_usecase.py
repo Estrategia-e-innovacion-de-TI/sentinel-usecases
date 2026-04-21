@@ -9,6 +9,8 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "usecases" / "Cortex" / "src"))
 
 from cortex_usecase import (  # noqa: E402
+    CortexClientConfig,
+    CortexManagementAuditClient,
     CortexManagementAuditParser,
     build_anomaly_taxonomy_table,
     build_field_interpretation_table,
@@ -74,3 +76,34 @@ def test_cortex_schema_and_taxonomy_tables_exist():
         "limitaciones",
     }.issubset(field_table.columns)
     assert len(taxonomy) >= 6
+
+
+def test_cortex_client_config_normalizes_base_url_to_origin():
+    config = CortexClientConfig(
+        base_url="https://api-grupo-bancolombia.xdr.us.paloaltonetworks.com/api_keys/validate/",
+        api_key_id="89",
+        api_key="secret",
+    )
+
+    client = CortexManagementAuditClient(config)
+
+    assert config.base_url == "https://api-grupo-bancolombia.xdr.us.paloaltonetworks.com"
+    assert (
+        client.endpoint_url
+        == "https://api-grupo-bancolombia.xdr.us.paloaltonetworks.com/public_api/v1/audits/management_logs"
+    )
+
+
+def test_build_schema_profile_handles_unhashable_values():
+    dataframe = pd.DataFrame(
+        {
+            "list_column": [["a", "b"], ["a", "b"], ["c"]],
+            "dict_column": [{"x": 1}, {"x": 1}, {"x": 2}],
+        }
+    )
+
+    profile = build_schema_profile(dataframe)
+
+    cardinality = dict(zip(profile["field"], profile["cardinality"]))
+    assert cardinality["list_column"] == 2
+    assert cardinality["dict_column"] == 2

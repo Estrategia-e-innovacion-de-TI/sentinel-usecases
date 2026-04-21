@@ -1,0 +1,44 @@
+{
+  "runtime_mode": "live_api",
+  "validation_summary": {
+    "success": true,
+    "total_count": 10003,
+    "result_count": 1,
+    "reply_keys": [
+      "data",
+      "result_count",
+      "total_count"
+    ]
+  },
+  "persisted_raw_path": "/Users/jomaver/Desktop/Code/sentinel-usecases/usecases/Cortex/data/raw/cortex_mgmt_audit_20260421T145553Z_20260421T205553Z.json",
+  "metadata_output_path": "/Users/jomaver/Desktop/Code/sentinel-usecases/usecases/Cortex/data/processed/cortex_mgmt_audit_20260421T145553Z_20260421T205553Z_metadata.json",
+  "processed_events_path": "/Users/jomaver/Desktop/Code/sentinel-usecases/usecases/Cortex/data/processed/cortex_mgmt_audit_20260421T145553Z_20260421T205553Z_events.csv",
+  "processed_features_path": "/Users/jomaver/Desktop/Code/sentinel-usecases/usecases/Cortex/data/processed/cortex_mgmt_audit_20260421T145553Z_20260421T205553Z_window_features.csv",
+  "record_count": 100,
+  "raw_columns": [
+    "AUDIT_ID",
+    "AUDIT_OWNER_NAME",
+    "AUDIT_OWNER_EMAIL",
+    "AUDIT_ASSET_JSON",
+    "AUDIT_ASSET_NAMES",
+    "AUDIT_HOSTNAME",
+    "AUDIT_RESULT",
+    "AUDIT_REASON",
+    "AUDIT_DESCRIPTION",
+    "AUDIT_ENTITY",
+    "AUDIT_ENTITY_SUBTYPE",
+    "AUDIT_SESSION_ID",
+    "AUDIT_CASE_ID",
+    "AUDIT_INSERT_TIME",
+    "AUDIT_SEVERITY",
+    "AUDIT_LINK",
+    "AUDIT_SOURCE_IP",
+    "AUDIT_USER_AGENT",
+    "AUDIT_USER_ROLES",
+    "AUDIT_OBJECT_ID",
+    "__source_file"
+  ],
+  "start_time": "2026-04-21T14:55:53.194120+00:00",
+  "end_time": "2026-04-21T20:55:53.194120+00:00",
+  "note": "If runtime_mode == sample_fixture, schema conclusions remain provisional until a live extraction is executed."
+}
