@@ -20,6 +20,7 @@ dev = [
     "pytest-cov>=4",
     "ipykernel>=6.29.5",
     "nbformat>=4.2.0",
+    "requests>=2.32.0",
 ]
 deep = ["torch>=2.6.0", "ncps>=0.0.7"]
 viz = [

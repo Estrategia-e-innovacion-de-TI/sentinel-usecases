@@ -51,14 +51,14 @@ class QualityReport:
     @property
     def failed_checks(self) -> List[CheckResult]:
         """Return only the checks that failed."""
-        return [c for c in self.checks if not c.passed]
+        return [check for check in self.checks if not check.passed]
 
     @property
     def score(self) -> float:
         """Fraction of checks that passed (0.0 to 1.0)."""
         if not self.checks:
             return 0.0
-        return sum(1 for c in self.checks if c.passed) / len(self.checks)
+        return sum(1 for check in self.checks if check.passed) / len(self.checks)
 
     def interpret(self) -> str:
         """Generate a human-readable interpretation of the report.
@@ -73,13 +73,12 @@ class QualityReport:
         """
         lines: List[str] = []
         n_total = len(self.checks)
-        n_passed = sum(1 for c in self.checks if c.passed)
+        n_passed = sum(1 for check in self.checks if check.passed)
         n_failed = n_total - n_passed
 
-        # Overall verdict
         if self.passed:
             lines.append(
-                f"SIGNAL DETECTED — All {n_total} checks passed "
+                f"SIGNAL DETECTED - All {n_total} checks passed "
                 f"(score: {self.score:.0%})."
             )
             lines.append(
@@ -89,16 +88,15 @@ class QualityReport:
             return "\n".join(lines)
 
         lines.append(
-            f"INSUFFICIENT SIGNAL — {n_failed}/{n_total} checks failed "
+            f"INSUFFICIENT SIGNAL - {n_failed}/{n_total} checks failed "
             f"(score: {self.score:.0%})."
         )
 
-        # Group failures by check name
         failure_groups: dict = {}
-        for c in self.failed_checks:
-            failure_groups.setdefault(c.name, []).append(c)
+        for check in self.failed_checks:
+            failure_groups.setdefault(check.name, []).append(check)
 
-        _explanations = {
+        explanations = {
             "min_entries": (
                 "Not enough data points. The dataset has fewer rows than "
                 "the required minimum. Collect more data or use "
@@ -129,13 +127,12 @@ class QualityReport:
         }
 
         for name, checks in failure_groups.items():
-            cols = ", ".join(c.column for c in checks)
-            explanation = _explanations.get(name, "Check failed.")
+            cols = ", ".join(check.column for check in checks)
+            explanation = explanations.get(name, "Check failed.")
             lines.append("")
             lines.append(f"  [{name}] Failed for: {cols}")
-            lines.append(f"    → {explanation}")
+            lines.append(f"    -> {explanation}")
 
-        # Recommendation
         lines.append("")
         if "min_entries" in failure_groups and len(failure_groups) == 1:
             lines.append(

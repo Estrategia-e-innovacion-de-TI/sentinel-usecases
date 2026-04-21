@@ -7,8 +7,16 @@ and ``SHAPVisualizer`` for model interpretability via SHAP values.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-import shap
+
+try:
+    import plotly.graph_objects as go
+except ImportError:  # pragma: no cover - optional dependency
+    go = None
+
+try:
+    import shap
+except ImportError:  # pragma: no cover - optional dependency
+    shap = None
 
 
 class AnomalyVisualizer:
@@ -105,6 +113,12 @@ class AnomalyVisualizer:
         """
         if colors is None:
             colors = {'normal': 'blue', 'anomaly': 'red', 'incident': 'orange'}
+
+        if go is None:
+            raise ImportError(
+                "plot_dynamic requires the optional 'plotly' dependency. "
+                "Install it with `pip install -e \".[viz]\"`."
+            )
 
         fig = go.Figure()
 
@@ -241,6 +255,11 @@ class SHAPVisualizer:
     """
 
     def __init__(self, model):
+        if shap is None:
+            raise ImportError(
+                "SHAPVisualizer requires the optional 'shap' dependency. "
+                "Install it with `pip install -e \".[viz]\"`."
+            )
         self.model = model
         self.explainer = shap.TreeExplainer(self.model.model)
         self._shap_values_cache = None
